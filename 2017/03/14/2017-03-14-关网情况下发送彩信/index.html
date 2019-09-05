@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="前提条件 要让系统支持移动网络关闭下发彩信，首先要打开framework/opt/telephony/resources/res/values/下的开关.  12&amp;lt;!-- Configuration for sending and receiving Mms when mobile data is disabled.--&amp;gt;&amp;lt;bool name=&quot;config_enable_mms">
+<meta name="keywords" content="Android,Mms,Data Connection">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android M移动网络关闭下彩信发送流程">
+<meta property="og:url" content="http://yoursite.com/2017/03/14/2017-03-14-关网情况下发送彩信/index.html">
+<meta property="og:site_name" content="蒙面超人">
+<meta property="og:description" content="前提条件 要让系统支持移动网络关闭下发彩信，首先要打开framework/opt/telephony/resources/res/values/下的开关.  12&amp;lt;!-- Configuration for sending and receiving Mms when mobile data is disabled.--&amp;gt;&amp;lt;bool name=&quot;config_enable_mms">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/img/mms_dc.png">
+<meta property="og:updated_time" content="2019-09-04T15:50:30.229Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android M移动网络关闭下彩信发送流程">
+<meta name="twitter:description" content="前提条件 要让系统支持移动网络关闭下发彩信，首先要打开framework/opt/telephony/resources/res/values/下的开关.  12&amp;lt;!-- Configuration for sending and receiving Mms when mobile data is disabled.--&amp;gt;&amp;lt;bool name=&quot;config_enable_mms">
+<meta name="twitter:image" content="http://yoursite.com/img/mms_dc.png">
+  <link rel="canonical" href="http://yoursite.com/2017/03/14/2017-03-14-关网情况下发送彩信/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Android M移动网络关闭下彩信发送流程 | 蒙面超人</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蒙面超人</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/14/2017-03-14-关网情况下发送彩信/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Kevin Liu">
+      <meta itemprop="description" content="简单生活">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蒙面超人">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Android M移动网络关闭下彩信发送流程
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2017-03-14 00:00:00" itemprop="dateCreated datePublished" datetime="2017-03-14T00:00:00+08:00">2017-03-14</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-09-04 23:50:30" itemprop="dateModified" datetime="2019-09-04T23:50:30+08:00">2019-09-04</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="前提条件"><a href="#前提条件" class="headerlink" title="前提条件"></a><strong>前提条件</strong></h3><ul>
+<li><strong>要让系统支持移动网络关闭下发彩信，首先要打开framework/opt/telephony/resources/res/values/下的开关.</strong></li>
+</ul>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- Configuration for sending and receiving Mms when mobile data is disabled.--&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">bool</span> <span class="attr">name</span>=<span class="string">"config_enable_mms_with_mobile_data_off"</span>&gt;</span>true<span class="tag">&lt;/<span class="name">bool</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a><strong>实现原理</strong></h3><ul>
+<li>Mms在发送彩信的时候，发现当前无移动网络时，则请求mms apn注网，注网成功后，发送彩信相关数据，完成后并且没有pending的彩信，则请求断开网络。</li>
+<li>在dual-sim的时候，需要check activePhoneId 和 requestPhoneId, 如果不一样，再要断开activePhoneId, 然后按requestPhoneId注网。</li>
+</ul>
+<h3 id="时序图"><a href="#时序图" class="headerlink" title="时序图"></a><strong>时序图</strong></h3><p><a href="/img/mms_dc.png"><img src="/img/mms_dc.png" alt="mms_dc"></a></p>
+<h3 id="详解"><a href="#详解" class="headerlink" title="详解"></a><strong>详解</strong></h3><p>framework/base 层，由mms调用ConnectivityManager的requestNetwork入口，到ConnectivityService，进行封装NetworkRequest注册网络，再到NetworkFactory处理NetworkRequest于opt/telephony通信。</p>
+<ul>
+<li><p>ConnectivityManager.java </p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">requestNetwork</span><span class="params">(NetworkRequest request, NetworkCallback networkCallback)</span> </span>&#123;</span><br><span class="line">    sendRequestForNetwork(request.networkCapabilities, networkCallback, <span class="number">0</span>,</span><br><span class="line">            REQUEST, inferLegacyTypeForNetworkCapabilities(request.networkCapabilities));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> NetworkRequest <span class="title">sendRequestForNetwork</span><span class="params">(NetworkCapabilities need,</span></span></span><br><span class="line"><span class="function"><span class="params">        NetworkCallback networkCallback, <span class="keyword">int</span> timeoutSec, <span class="keyword">int</span> action,</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="keyword">int</span> legacyType)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (networkCallback == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"null NetworkCallback"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (need == <span class="keyword">null</span>) <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"null NetworkCapabilities"</span>);</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        incCallbackHandlerRefCount();</span><br><span class="line">        <span class="keyword">synchronized</span>(sNetworkCallback) &#123;</span><br><span class="line">            <span class="keyword">if</span> (action == LISTEN) &#123;</span><br><span class="line">                networkCallback.networkRequest = mService.listenForNetwork(need,</span><br><span class="line">                        <span class="keyword">new</span> Messenger(sCallbackHandler), <span class="keyword">new</span> Binder());</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                networkCallback.networkRequest = mService.requestNetwork(need,</span><br><span class="line">                        <span class="keyword">new</span> Messenger(sCallbackHandler), </span><br><span class="line">                        timeoutSec, <span class="keyword">new</span> Binder(), legacyType);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (networkCallback.networkRequest != <span class="keyword">null</span>) &#123;</span><br><span class="line">                sNetworkCallback.put(networkCallback.networkRequest, networkCallback);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">catch</span> (RemoteException e) &#123;&#125;</span><br><span class="line">    <span class="keyword">if</span> (networkCallback.networkRequest == <span class="keyword">null</span>) decCallbackHandlerRefCount();</span><br><span class="line">    <span class="keyword">return</span> networkCallback.networkRequest;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>ConnectivityService.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">handleRegisterNetworkRequest</span><span class="params">(NetworkRequestInfo nri)</span> </span>&#123;</span><br><span class="line">    mNetworkRequests.put(nri.request, nri);</span><br><span class="line">    mNetworkRequestInfoLogs.log(<span class="string">"REGISTER "</span> + nri);</span><br><span class="line">    <span class="keyword">if</span> (!nri.isRequest) &#123;</span><br><span class="line">        <span class="keyword">for</span> (NetworkAgentInfo network : mNetworkAgentInfos.values()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (nri.request.networkCapabilities.hasSignalStrength() &amp;&amp;</span><br><span class="line">                    network.satisfiesImmutableCapabilitiesOf(nri.request)) &#123;</span><br><span class="line">                updateSignalStrengthThresholds(network, <span class="string">"REGISTER"</span>, nri.request);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    rematchAllNetworksAndRequests(<span class="keyword">null</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (nri.isRequest &amp;&amp; mNetworkForRequestId.get(nri.request.requestId) == <span class="keyword">null</span>) &#123;</span><br><span class="line">        sendUpdatedScoreToFactories(nri.request, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">sendUpdatedScoreToFactories</span><span class="params">(NetworkRequest networkRequest, <span class="keyword">int</span> score)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (VDBG) log(<span class="string">"sending new Min Network Score("</span> + score + <span class="string">"): "</span> </span><br><span class="line">                       + networkRequest.toString());</span><br><span class="line">    <span class="keyword">for</span> (NetworkFactoryInfo nfi : mNetworkFactoryInfos.values()) &#123;</span><br><span class="line">        nfi.asyncChannel.sendMessage(android.net.NetworkFactory.CMD_REQUEST_NETWORK,</span><br><span class="line">            score, <span class="number">0</span>, networkRequest);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>NetworkFactory.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">handleAddRequest</span><span class="params">(NetworkRequest request, <span class="keyword">int</span> score)</span> </span>&#123;</span><br><span class="line">    NetworkRequestInfo n = mNetworkRequests.get(request.requestId);</span><br><span class="line">    <span class="keyword">if</span> (n == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (DBG) log(<span class="string">"got request "</span> + request + <span class="string">" with score "</span> + score);</span><br><span class="line">        n = <span class="keyword">new</span> NetworkRequestInfo(request, score);</span><br><span class="line">        mNetworkRequests.put(n.request.requestId, n);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (VDBG) log(<span class="string">"new score "</span> + score + <span class="string">" for exisiting request "</span> + request);</span><br><span class="line">        n.score = score;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (VDBG) log(<span class="string">"  my score="</span> + mScore + <span class="string">", my filter="</span> + mCapabilityFilter);</span><br><span class="line"></span><br><span class="line">    evalRequest(n);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">evalRequest</span><span class="params">(NetworkRequestInfo n)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (VDBG) log(<span class="string">"evalRequest"</span>);</span><br><span class="line">    <span class="keyword">if</span> (n.requested == <span class="keyword">false</span> </span><br><span class="line">            &amp;&amp; n.score &lt; mScore &amp;&amp;</span><br><span class="line">            n.request.networkCapabilities.satisfiedByNetworkCapabilities(</span><br><span class="line">            mCapabilityFilter) </span><br><span class="line">            &amp;&amp; acceptRequest(n.request, n.score)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (VDBG) log(<span class="string">"  needNetworkFor"</span>);</span><br><span class="line">        needNetworkFor(n.request, n.score);</span><br><span class="line">        n.requested = <span class="keyword">true</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (n.requested == <span class="keyword">true</span> &amp;&amp;</span><br><span class="line">            (n.score &gt; mScore </span><br><span class="line">            || n.request.networkCapabilities.satisfiedByNetworkCapabilities(</span><br><span class="line">            mCapabilityFilter) == <span class="keyword">false</span> </span><br><span class="line">            || acceptRequest(n.request, n.score) == <span class="keyword">false</span>)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (VDBG) log(<span class="string">"  releaseNetworkFor"</span>);</span><br><span class="line">        releaseNetworkFor(n.request);</span><br><span class="line">        n.requested = <span class="keyword">false</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (VDBG) log(<span class="string">"  done"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>opt/telephony 根据request选择相应的APN，再由Dataconnection状态机确认进行状态的转化，再由DcTracker进行trySetupData, 再到DataConnection状态机，发ril消息到modem.</p>
+<ul>
+<li><p>ApnContext.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">incRefCount</span><span class="params">(LocalLog log)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (mRefCountLock) &#123;</span><br><span class="line">        <span class="keyword">if</span> (mRefCount == <span class="number">0</span>) &#123;</span><br><span class="line">           <span class="comment">// we wanted to leave the last in so it could actually capture</span></span><br><span class="line">           <span class="comment">// the tear down of the network</span></span><br><span class="line">           requestLog(<span class="string">"clearing log with size="</span> + mLocalLogs.size());</span><br><span class="line">           mLocalLogs.clear();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (mLocalLogs.contains(log)) &#123;</span><br><span class="line">            log.log(<span class="string">"ApnContext.incRefCount has duplicate add - "</span> + mRefCount);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            mLocalLogs.add(log);</span><br><span class="line">            log.log(<span class="string">"ApnContext.incRefCount - "</span> + mRefCount);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (mRefCount++ == <span class="number">0</span>) &#123;</span><br><span class="line">            mDcTracker.setEnabled(mDcTracker.apnTypeToId(mApnType), <span class="keyword">true</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        log(<span class="string">"incRefCount postIncrement = "</span> + mRefCount);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>DcTracker.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">applyNewState</span><span class="params">(ApnContext apnContext, <span class="keyword">boolean</span> enabled, <span class="keyword">boolean</span> met)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">boolean</span> cleanup = <span class="keyword">false</span>;</span><br><span class="line">    <span class="keyword">boolean</span> trySetup = <span class="keyword">false</span>;</span><br><span class="line">    String str =<span class="string">"applyNewState("</span> + apnContext.getApnType() + <span class="string">", "</span> + enabled +</span><br><span class="line">            <span class="string">"("</span> + apnContext.isEnabled() + <span class="string">"), "</span> + met + <span class="string">"("</span> +</span><br><span class="line">            apnContext.getDependencyMet() +<span class="string">"))"</span>;</span><br><span class="line">    <span class="keyword">if</span> (DBG) log(str);</span><br><span class="line">    apnContext.requestLog(str);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (apnContext.isReady()) &#123;</span><br><span class="line">        cleanup = <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">if</span> (enabled &amp;&amp; met) &#123;</span><br><span class="line">            DctConstants.State state = apnContext.getState();</span><br><span class="line">            <span class="keyword">switch</span>(state) &#123;</span><br><span class="line">                <span class="keyword">case</span> CONNECTING:</span><br><span class="line">                <span class="keyword">case</span> SCANNING:</span><br><span class="line">                <span class="keyword">case</span> CONNECTED:</span><br><span class="line">                <span class="keyword">case</span> DISCONNECTING:</span><br><span class="line">                    <span class="comment">// We're "READY" and active so just return</span></span><br><span class="line">                    <span class="keyword">if</span> (DBG) log(<span class="string">"applyNewState: 'ready' so return"</span>);</span><br><span class="line">                    apnContext.requestLog(<span class="string">"applyNewState state="</span> </span><br><span class="line">                              + state + <span class="string">", so return"</span>);</span><br><span class="line">                    <span class="keyword">return</span>;</span><br><span class="line">                <span class="keyword">case</span> IDLE:</span><br><span class="line">                    <span class="comment">// fall through: this is unexpected but if it happens cleanup </span></span><br><span class="line">                    <span class="comment">// and try setup</span></span><br><span class="line">                <span class="keyword">case</span> FAILED:</span><br><span class="line">                <span class="keyword">case</span> RETRYING: &#123;</span><br><span class="line">                    <span class="comment">// We're "READY" but not active so disconnect (cleanup = true)</span></span><br><span class="line">                    <span class="comment">// and</span></span><br><span class="line">                    <span class="comment">// connect (trySetup = true) to be sure we retry the connection.</span></span><br><span class="line">                    trySetup = <span class="keyword">true</span>;</span><br><span class="line">                    apnContext.setReason(Phone.REASON_DATA_ENABLED);</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (met) &#123;</span><br><span class="line">            apnContext.setReason(Phone.REASON_DATA_DISABLED);</span><br><span class="line">            <span class="comment">// If ConnectivityService has disabled this network,stop trying to bring</span></span><br><span class="line">            <span class="comment">// it up, but do not tear it down - ConnectivityService will do that</span></span><br><span class="line">            <span class="comment">// directly by talking with the DataConnection.</span></span><br><span class="line">            <span class="comment">// This doesn't apply to DUN, however.  Those connections have special</span></span><br><span class="line">            <span class="comment">// requirements from carriers and we need stop using them when the dun</span></span><br><span class="line">            <span class="comment">// request goes away.  This applies to both CDMA and GSM because </span></span><br><span class="line">            <span class="comment">// they both can declare the DUN APN sharable by default traffic, </span></span><br><span class="line">            <span class="comment">// thus still satisfying</span></span><br><span class="line">            <span class="comment">// those requests and not torn down organically.</span></span><br><span class="line">            <span class="keyword">if</span> (((apnContext.getApnType() == PhoneConstants.APN_TYPE_DUN </span><br><span class="line">                    &amp;&amp; teardownForDun()) </span><br><span class="line">                    || apnContext.getApnType() == PhoneConstants.APN_TYPE_MMS)</span><br><span class="line">                    || apnContext.getState() != DctConstants.State.CONNECTED) &#123;</span><br><span class="line">                cleanup = <span class="keyword">true</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                cleanup = <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            apnContext.setReason(Phone.REASON_DATA_DEPENDENCY_UNMET);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (enabled &amp;&amp; met) &#123;</span><br><span class="line">            <span class="keyword">if</span> (apnContext.isEnabled()) &#123;</span><br><span class="line">                apnContext.setReason(Phone.REASON_DATA_DEPENDENCY_MET);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                apnContext.setReason(Phone.REASON_DATA_ENABLED);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (apnContext.getState() == DctConstants.State.FAILED) &#123;</span><br><span class="line">                apnContext.setState(DctConstants.State.IDLE);</span><br><span class="line">            &#125;</span><br><span class="line">            trySetup = <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    apnContext.setEnabled(enabled);</span><br><span class="line">    apnContext.setDependencyMet(met);</span><br><span class="line">    <span class="keyword">if</span> (cleanup) cleanUpConnection(<span class="keyword">true</span>, apnContext);</span><br><span class="line">    <span class="keyword">if</span> (trySetup) &#123;</span><br><span class="line">        apnContext.resetErrorCodeRetries();</span><br><span class="line">        trySetupData(apnContext);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>DataConnection.java</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">onConnect</span><span class="params">(ConnectionParams cp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (DBG) log(<span class="string">"onConnect: carrier='"</span> + mApnSetting.carrier</span><br><span class="line">            + <span class="string">"' APN='"</span> + mApnSetting.apn</span><br><span class="line">            + <span class="string">"' proxy='"</span> + mApnSetting.proxy + <span class="string">"' port='"</span> + mApnSetting.port + <span class="string">"'"</span>);</span><br><span class="line">    <span class="keyword">if</span> (cp.mApnContext != <span class="keyword">null</span>) cp.mApnContext.requestLog(<span class="string">"DataConnection.onConnect"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Check if we should fake an error.</span></span><br><span class="line">    <span class="keyword">if</span> (mDcTesterFailBringUpAll.getDcFailBringUp().mCounter  &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        DataCallResponse response = <span class="keyword">new</span> DataCallResponse();</span><br><span class="line">        response.version = mPhone.mCi.getRilVersion();</span><br><span class="line">        response.status = </span><br><span class="line">              mDcTesterFailBringUpAll.getDcFailBringUp().mFailCause.getErrorCode();</span><br><span class="line">        response.cid = <span class="number">0</span>;</span><br><span class="line">        response.active = <span class="number">0</span>;</span><br><span class="line">        response.type = <span class="string">""</span>;</span><br><span class="line">        response.ifname = <span class="string">""</span>;</span><br><span class="line">        response.addresses = <span class="keyword">new</span> String[<span class="number">0</span>];</span><br><span class="line">        response.dnses = <span class="keyword">new</span> String[<span class="number">0</span>];</span><br><span class="line">        response.gateways = <span class="keyword">new</span> String[<span class="number">0</span>];</span><br><span class="line">        response.suggestedRetryTime =</span><br><span class="line">                mDcTesterFailBringUpAll.getDcFailBringUp().mSuggestedRetryTime;</span><br><span class="line">        response.pcscf = <span class="keyword">new</span> String[<span class="number">0</span>];</span><br><span class="line">        response.mtu = PhoneConstants.UNSET_MTU;</span><br><span class="line"></span><br><span class="line">        Message msg = obtainMessage(EVENT_SETUP_DATA_CONNECTION_DONE, cp);</span><br><span class="line">        AsyncResult.forMessage(msg, response, <span class="keyword">null</span>);</span><br><span class="line">        sendMessage(msg);</span><br><span class="line">        <span class="keyword">if</span> (DBG) &#123;</span><br><span class="line">            log(<span class="string">"onConnect: FailBringUpAll="</span> </span><br><span class="line">                    + mDcTesterFailBringUpAll.getDcFailBringUp()</span><br><span class="line">                    + <span class="string">" send error response="</span> + response);</span><br><span class="line">        &#125;</span><br><span class="line">        mDcTesterFailBringUpAll.getDcFailBringUp().mCounter -= <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mCreateTime = -<span class="number">1</span>;</span><br><span class="line">    mLastFailTime = -<span class="number">1</span>;</span><br><span class="line">    mLastFailCause = DcFailCause.NONE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// msg.obj will be returned in AsyncResult.userObj;</span></span><br><span class="line">    Message msg = obtainMessage(EVENT_SETUP_DATA_CONNECTION_DONE, cp);</span><br><span class="line">    msg.obj = cp;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> authType = mApnSetting.authType;</span><br><span class="line">    <span class="keyword">if</span> (authType == -<span class="number">1</span>) &#123;</span><br><span class="line">        authType = TextUtils.isEmpty(mApnSetting.user) </span><br><span class="line">                ? RILConstants.SETUP_DATA_AUTH_NONE</span><br><span class="line">                : RILConstants.SETUP_DATA_AUTH_PAP_CHAP;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    String protocol;</span><br><span class="line">    <span class="keyword">if</span> (mPhone.getServiceState().getDataRoamingFromRegistration()) &#123;</span><br><span class="line">        protocol = mApnSetting.roamingProtocol;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        protocol = mApnSetting.protocol;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    mPhone.mCi.setupDataCall(</span><br><span class="line">            Integer.toString(cp.mRilRat + <span class="number">2</span>),</span><br><span class="line">            Integer.toString(cp.mProfileId),</span><br><span class="line">            mApnSetting.apn, mApnSetting.user, mApnSetting.password,</span><br><span class="line">            Integer.toString(authType),</span><br><span class="line">            protocol, msg);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>注网成功后，发出network available的notification, Mms获取到ConnectivityManager的NetworkCallback之后，<br>发送彩信的数据，完成后关闭网络跟注网流程类似，不过都是调用的release network相关的方法，之后走到applyNewState之后cleanUpConnection.<br>Qcom平台有Bug，是发送成功后，网络没有关掉，可以参照以下代码，来解决该问题。<br>在apn type为mms时，cleanup 置为true.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">applyNewState</span><span class="params">(ApnContext apnContext, <span class="keyword">boolean</span> enabled, <span class="keyword">boolean</span> met)</span> </span>&#123;</span><br><span class="line">     </span><br><span class="line">		<span class="comment">// xxx	</span></span><br><span class="line">      <span class="keyword">if</span> (apnContext.isReady()) &#123;</span><br><span class="line">          cleanup = <span class="keyword">true</span>;</span><br><span class="line">          <span class="keyword">if</span> (enabled &amp;&amp; met) &#123;</span><br><span class="line">              <span class="comment">// xxx</span></span><br><span class="line">          &#125; <span class="keyword">else</span> <span class="keyword">if</span> (met) &#123;</span><br><span class="line">              apnContext.setReason(Phone.REASON_DATA_DISABLED);</span><br><span class="line">              <span class="comment">// If ConnectivityService has disabled this network, stop trying to bring</span></span><br><span class="line">              <span class="comment">// it up, but do not tear it down - ConnectivityService will do that</span></span><br><span class="line">              <span class="comment">// directly by talking with the DataConnection.</span></span><br><span class="line">              <span class="comment">//</span></span><br><span class="line">              <span class="comment">// This doesn't apply to DUN, however.  Those connections have special</span></span><br><span class="line">              <span class="comment">// requirements from carriers and we need stop using them when the dun</span></span><br><span class="line">              <span class="comment">// request goes away.  This applies to both CDMA and GSM because they both</span></span><br><span class="line">              <span class="comment">// can declare the DUN APN sharable by default traffic, </span></span><br><span class="line">              <span class="comment">// thus still satisfying</span></span><br><span class="line">              <span class="comment">// those requests and not torn down organically.</span></span><br><span class="line">              <span class="keyword">if</span> (((apnContext.getApnType() == PhoneConstants.APN_TYPE_DUN </span><br><span class="line">                      &amp;&amp; teardownForDun()) </span><br><span class="line">                      || apnContext.getApnType() == PhoneConstants.APN_TYPE_MMS)</span><br><span class="line">                      || apnContext.getState() != DctConstants.State.CONNECTED) &#123;</span><br><span class="line">                  cleanup = <span class="keyword">true</span>;</span><br><span class="line">              &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                  cleanup = <span class="keyword">false</span>;</span><br><span class="line">              &#125;</span><br><span class="line">          &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">              apnContext.setReason(Phone.REASON_DATA_DEPENDENCY_UNMET);</span><br><span class="line">          &#125;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">          <span class="comment">// xxx</span></span><br><span class="line">      &#125;</span><br><span class="line">      apnContext.setEnabled(enabled);</span><br><span class="line">      apnContext.setDependencyMet(met);</span><br><span class="line">      <span class="keyword">if</span> (cleanup) cleanUpConnection(<span class="keyword">true</span>, apnContext);</span><br><span class="line">      <span class="keyword">if</span> (trySetup) &#123;</span><br><span class="line">          apnContext.resetErrorCodeRetries();</span><br><span class="line">          trySetupData(apnContext);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/Android/" rel="tag"># Android</a>
+            
+              <a href="/tags/Mms/" rel="tag"># Mms</a>
+            
+              <a href="/tags/Data-Connection/" rel="tag"># Data Connection</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2017/03/13/2017-03-13-Video Call hide me功能简介/" rel="next" title="Video Call Hide me简介">
+                  <i class="fa fa-chevron-left"></i> Video Call Hide me简介
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前提条件"><span class="nav-number">1.</span> <span class="nav-text">前提条件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实现原理"><span class="nav-number">2.</span> <span class="nav-text">实现原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#时序图"><span class="nav-number">3.</span> <span class="nav-text">时序图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#详解"><span class="nav-number">4.</span> <span class="nav-text">详解</span></a></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Kevin Liu</p>
+  <div class="site-description" itemprop="description">简单生活</div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Kevin Liu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+
+
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>

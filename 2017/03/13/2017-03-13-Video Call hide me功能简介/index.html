@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 3.9.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=7.4.0">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=7.4.0">
+  <link rel="mask-icon" href="/images/logo.svg?v=7.4.0" color="#222">
+
+<link rel="stylesheet" href="/css/main.css?v=7.4.0">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.7.0">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.4.0',
+    exturl: false,
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    translation: {
+      copy_button: '复制',
+      copy_success: '复制成功',
+      copy_failure: '复制失败'
+    },
+    sidebarPadding: 40
+  };
+</script>
+
+  <meta name="description" content="Hide/Show Me本来应该是由AP测直接调用onSetPauseImage就Ok,但是由于Qcom M平台并没有full 实现onSetPauseImage，导致AP不得不做workaround来实现此功能，所以才有本文。 Hide Me是什么 Hide/Show me 功能为在Video call时候，关闭camera，给对方展示默认或者自定义图片。  Hide Me实现细节关闭camer">
+<meta name="keywords" content="Android,Video call,Hide me">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Video Call Hide me简介">
+<meta property="og:url" content="http://yoursite.com/2017/03/13/2017-03-13-Video Call hide me功能简介/index.html">
+<meta property="og:site_name" content="蒙面超人">
+<meta property="og:description" content="Hide/Show Me本来应该是由AP测直接调用onSetPauseImage就Ok,但是由于Qcom M平台并没有full 实现onSetPauseImage，导致AP不得不做workaround来实现此功能，所以才有本文。 Hide Me是什么 Hide/Show me 功能为在Video call时候，关闭camera，给对方展示默认或者自定义图片。  Hide Me实现细节关闭camer">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-09-04T15:53:35.326Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Video Call Hide me简介">
+<meta name="twitter:description" content="Hide/Show Me本来应该是由AP测直接调用onSetPauseImage就Ok,但是由于Qcom M平台并没有full 实现onSetPauseImage，导致AP不得不做workaround来实现此功能，所以才有本文。 Hide Me是什么 Hide/Show me 功能为在Video call时候，关闭camera，给对方展示默认或者自定义图片。  Hide Me实现细节关闭camer">
+  <link rel="canonical" href="http://yoursite.com/2017/03/13/2017-03-13-Video Call hide me功能简介/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true,
+    isPage: false,
+    isArchive: false
+  };
+</script>
+
+  <title>Video Call Hide me简介 | 蒙面超人</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">蒙面超人</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+      
+      
+      
+        
+        <li class="menu-item menu-item-home">
+      
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-tags">
+      
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+      
+      
+      
+        
+        <li class="menu-item menu-item-archives">
+      
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+            
+
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+      <article itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block post">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/03/13/2017-03-13-Video Call hide me功能简介/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Kevin Liu">
+      <meta itemprop="description" content="简单生活">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="蒙面超人">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">Video Call Hide me简介
+
+          
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              
+                
+              
+
+              <time title="创建时间：2017-03-13 00:00:00" itemprop="dateCreated datePublished" datetime="2017-03-13T00:00:00+08:00">2017-03-13</time>
+            </span>
+          
+            
+
+            
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-09-04 23:53:35" itemprop="dateModified" datetime="2019-09-04T23:53:35+08:00">2019-09-04</time>
+              </span>
+            
+          
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>Hide/Show Me本来应该是由AP测直接调用onSetPauseImage就Ok,但是由于Qcom M平台并没有full 实现onSetPauseImage，导致AP不得不做workaround来实现此功能，所以才有本文。</strong></p>
+<h3 id="Hide-Me是什么"><a href="#Hide-Me是什么" class="headerlink" title="Hide Me是什么"></a>Hide Me是什么</h3><blockquote>
+<p><strong>Hide/Show me 功能为在Video call时候，关闭camera，给对方展示默认或者自定义图片。</strong></p>
+</blockquote>
+<h3 id="Hide-Me实现细节"><a href="#Hide-Me实现细节" class="headerlink" title="Hide Me实现细节"></a>Hide Me实现细节</h3><h4 id="关闭camera-停止采集视频流。"><a href="#关闭camera-停止采集视频流。" class="headerlink" title="关闭camera, 停止采集视频流。"></a>关闭camera, 停止采集视频流。</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">VideoCall.setCamera(<span class="keyword">null</span>)</span><br></pre></td></tr></table></figure>
+
+<h4 id="Check-hide-me-image-是否存在。"><a href="#Check-hide-me-image-是否存在。" class="headerlink" title="Check hide me image 是否存在。"></a>Check hide me image 是否存在。</h4><ul>
+<li><p><strong>检查3G/4G对应的h263/h264文件是否存在</strong></p>
+</li>
+<li><p><strong>h263文件应由176x144分辨率的图片转化而来， h264应该由480X640图片转化而来。分辨率不对，会导致Peer device绿屏。</strong></p>
+</li>
+<li><p><strong>h263/h264文件转化</strong></p>
+<ol>
+<li><p><strong>使用<a href="https://github.com/FFmpeg/FFmpeg" target="_blank" rel="noopener">ffmpeg</a>库，交叉编译, 放入res/raw目录。</strong></p>
+</li>
+<li><p><strong>load ffmpeg.</strong></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">loadBinaryFile</span><span class="params">(Context context)</span> </span>&#123;</span><br><span class="line">    	String path = context.getFilesDir().getAbsolutePath();</span><br><span class="line">    	String rawFilePath = path + File.separator + <span class="string">"ffmpeg"</span>;</span><br><span class="line">   		File rawFile = <span class="keyword">new</span> File(rawFilePath);</span><br><span class="line">    	<span class="keyword">if</span> (!rawFile.exists()) &#123;</span><br><span class="line">        	<span class="keyword">boolean</span> isFileCopied = <span class="keyword">false</span>;</span><br><span class="line">        	File filesDirectory = context.getFilesDir();</span><br><span class="line">        	InputStream is;</span><br><span class="line">        	<span class="keyword">try</span> &#123;</span><br><span class="line">            	is = context.getResources().openRawResource(R.raw.ffmpeg);</span><br><span class="line">            	<span class="keyword">final</span> FileOutputStream os = <span class="keyword">new</span> FileOutputStream(<span class="keyword">new</span> File(filesDirectory, <span class="string">"ffmpeg"</span>));</span><br><span class="line">            	<span class="keyword">byte</span>[] buffer = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1024</span> * <span class="number">4</span>];</span><br><span class="line">            	<span class="keyword">int</span> n;</span><br><span class="line">            	<span class="keyword">while</span> (-<span class="number">1</span> != (n = is.read(buffer))) &#123;</span><br><span class="line">                	os.write(buffer, <span class="number">0</span>, n);</span><br><span class="line">            	&#125;</span><br><span class="line">            	<span class="keyword">if</span> (os != <span class="keyword">null</span>) &#123;</span><br><span class="line">                	<span class="keyword">try</span> &#123;</span><br><span class="line">                    	os.flush();</span><br><span class="line">                    	os.close();</span><br><span class="line">                	&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                    	<span class="comment">// Do nothing</span></span><br><span class="line">                	&#125;</span><br><span class="line">            	&#125;</span><br><span class="line">            	<span class="keyword">if</span> (is != <span class="keyword">null</span>) &#123;</span><br><span class="line">                	<span class="keyword">try</span> &#123;</span><br><span class="line">                    	is.close();</span><br><span class="line">                	&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                	&#125;</span><br><span class="line">            	&#125;</span><br><span class="line">            	isFileCopied = <span class="keyword">true</span>;</span><br><span class="line">        	&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">            	<span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        	&#125;</span><br><span class="line"></span><br><span class="line">        	<span class="comment">// make file executable</span></span><br><span class="line">        	<span class="keyword">if</span> (isFileCopied) &#123;</span><br><span class="line">            	<span class="keyword">if</span> (!rawFile.canExecute()) &#123;</span><br><span class="line">                	<span class="keyword">if</span> (rawFile.setExecutable(<span class="keyword">true</span>)) &#123;</span><br><span class="line">                    	<span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">                	&#125;</span><br><span class="line">            	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                	<span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            	&#125;</span><br><span class="line">        	&#125;</span><br><span class="line">    	&#125;</span><br><span class="line">    	<span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">	&#125;</span><br></pre></td></tr></table></figure>
+
+
+</li>
+</ol>
+</li>
+</ul>
+<pre><code>3. **compress image.**
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Uri <span class="title">compressVideo</span><span class="params">(Context context, Uri uri, <span class="keyword">int</span> iCodeC, <span class="keyword">int</span> iWidth, <span class="keyword">int</span> iHeight, <span class="keyword">boolean</span> bH264)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">  		String path = context.getFilesDir().getAbsolutePath();</span><br><span class="line">   	String yuvFile = path + File.separator + <span class="string">"test.yuv"</span>;</span><br><span class="line">   	String ffmpegFile = path + File.separator + <span class="string">"ffmpeg"</span>;</span><br><span class="line">   	String strSize = <span class="string">""</span>;</span><br><span class="line">   	File yFile = <span class="keyword">new</span> File(yuvFile);</span><br><span class="line">   	<span class="keyword">if</span> (yFile.exists()) &#123;</span><br><span class="line">       	yFile.delete();</span><br><span class="line">   	&#125;</span><br><span class="line">   	File otFile = <span class="keyword">new</span> File(outputFile);</span><br><span class="line">   	<span class="keyword">if</span> (otFile.exists()) &#123;</span><br><span class="line">       	otFile.delete();</span><br><span class="line">   	&#125;</span><br><span class="line">   	strSize = strSize.format(<span class="string">"%dx%d"</span>, iWidth, iHeight);</span><br><span class="line">   	String[] cmdJpegToYuv = <span class="keyword">null</span>;</span><br><span class="line">   	String[] cmdYuvTo264 = <span class="keyword">null</span>;</span><br><span class="line">   	<span class="keyword">if</span> (bH264) &#123;</span><br><span class="line">       	<span class="comment">//ffmpeg-l -i xxx.png -pix_fmt yuv420p -s 480x640 xxx.yuv // MODIFIED by xinli.zhang, 2016-12-12,BUG-3701265</span></span><br><span class="line">       	cmdJpegToYuv = <span class="keyword">new</span> String[]&#123;ffmpegFile,</span><br><span class="line">               <span class="string">"-i"</span>, inputPath,</span><br><span class="line">               <span class="string">"-pix_fmt"</span>, <span class="string">"yuv420p"</span>,</span><br><span class="line">               <span class="string">"-s"</span>, strSize,</span><br><span class="line">               yuvFile&#125;;</span><br><span class="line">       	<span class="comment">//ffmpeg-l  -s 480x640 -i EncSend-qcom-default-vga-test.yuv -s 480x640 -vcodec h264 -profile:v baseline -level:v 2.2 -refs 1 EncSend-qcom-default-vga-test.h264</span></span><br><span class="line">       	cmdYuvTo264 = <span class="keyword">new</span> String[]&#123;ffmpegFile,</span><br><span class="line">               <span class="string">"-s"</span>, strSize,</span><br><span class="line">               <span class="string">"-i"</span>, yuvFile,</span><br><span class="line">               <span class="string">"-vcodec"</span>, <span class="string">"h264"</span>,</span><br><span class="line">               <span class="string">"-profile:v"</span>, <span class="string">"baseline"</span>,</span><br><span class="line">               <span class="string">"-level:v"</span>, <span class="string">"2.2"</span>,</span><br><span class="line">               <span class="string">"-refs"</span>, <span class="string">"1"</span>,</span><br><span class="line">               outputFile&#125;;</span><br><span class="line">   	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">       	<span class="comment">//ffmpeg -i EncSend.png -s 176x144 -pix_fmt yuv420p EncSend-t263.yuv</span></span><br><span class="line">       	<span class="comment">//ffmpeg -s 176x144 -i EncSend-t263.yuv -s 176x144 -vcodec h263 -profile:v 0 -level:v 10 -b:v 90000 -qscale 18 test.h263</span></span><br><span class="line">       	cmdJpegToYuv = <span class="keyword">new</span> String[]&#123;ffmpegFile,</span><br><span class="line">               <span class="string">"-i"</span>, inputPath,</span><br><span class="line">               <span class="string">"-s"</span>, strSize,</span><br><span class="line">               <span class="string">"-pix_fmt"</span>, <span class="string">"yuv420p"</span>,</span><br><span class="line">               yuvFile&#125;;</span><br><span class="line">       	cmdYuvTo264 = <span class="keyword">new</span> String[]&#123;ffmpegFile,</span><br><span class="line">               <span class="string">"-s"</span>, strSize,</span><br><span class="line">               <span class="string">"-i"</span>, yuvFile,</span><br><span class="line">               <span class="string">"-s"</span>, strSize,</span><br><span class="line">               <span class="string">"-vcodec"</span>, <span class="string">"h263"</span>,</span><br><span class="line">               <span class="string">"-profile:v"</span>, <span class="string">"0"</span>,</span><br><span class="line">               <span class="string">"-level:v"</span>, <span class="string">"10"</span>,</span><br><span class="line">               <span class="string">"-b:v"</span>, <span class="string">"90000"</span>,</span><br><span class="line">               <span class="string">"-qscale"</span>, <span class="string">"54"</span>,</span><br><span class="line">               outputFile&#125;;</span><br><span class="line">   	&#125;</span><br><span class="line">   	<span class="keyword">final</span> Process[] p = <span class="keyword">new</span> Process[<span class="number">2</span>];</span><br><span class="line">   	<span class="keyword">if</span> (loadBinaryFile(context)) &#123;</span><br><span class="line">       	android.util.Log.d(TAG, <span class="string">"loadBinaryFile succeed!"</span>);</span><br><span class="line">       	p[<span class="number">0</span>] = Runtime.getRuntime().exec(cmdJpegToYuv);</span><br><span class="line">       	logProcess(p[<span class="number">0</span>]);</span><br><span class="line">       	p[<span class="number">0</span>].waitFor();</span><br><span class="line">       	android.util.Log.d(TAG, <span class="string">"convert yuv succeed!"</span>);</span><br><span class="line">       	p[<span class="number">1</span>] = Runtime.getRuntime().exec(cmdYuvTo264);</span><br><span class="line">       	logProcess(p[<span class="number">1</span>]);</span><br><span class="line">       	p[<span class="number">1</span>].waitFor();</span><br><span class="line">       	android.util.Log.d(TAG, <span class="string">"convert h264 succeed!"</span>);</span><br><span class="line">       	<span class="keyword">return</span> Uri.parse(outputFile);</span><br><span class="line">  		&#125;</span><br><span class="line">   	<span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></code></pre><h4 id="确定本机和Peer-device的网络类型-3G-4G"><a href="#确定本机和Peer-device的网络类型-3G-4G" class="headerlink" title="确定本机和Peer device的网络类型(3G/4G)"></a>确定本机和Peer device的网络类型(3G/4G)</h4><blockquote>
+<p><strong>确定peer device类型是根据onUpdatePeerDimensions回调的width/height来决定</strong></p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (call != <span class="keyword">null</span> &amp;&amp; call.getState() == Call.State.ACTIVE) &#123;</span><br><span class="line">        <span class="keyword">if</span> (width == <span class="number">176</span> &amp;&amp; height == <span class="number">144</span>) &#123;</span><br><span class="line">            <span class="comment">// (176, 144) is 3G vt call resolution, so if appear this resolution,</span></span><br><span class="line">            <span class="comment">// surely it's a 3G vt call</span></span><br><span class="line">            Log.d(TAG, <span class="string">"Is 3G VT Call"</span>);</span><br><span class="line">            mIs3GVTCall = <span class="keyword">true</span>;</span><br><span class="line">            mKnownVTCallType = <span class="keyword">true</span>;</span><br><span class="line">            <span class="comment">// Need to change video views, </span></span><br><span class="line">            <span class="comment">// because 3G vt call's ui is different from 4G vt call.</span></span><br><span class="line">            getUi().changeVideoViewTo3GMode();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            Log.d(TAG, <span class="string">"Is 4G VT Call"</span>);</span><br><span class="line">            mIs3GVTCall = <span class="keyword">false</span>;</span><br><span class="line">            getUi().changeVideoViewTo4GMode();</span><br><span class="line">        &#125;</span><br><span class="line">        mKnownVTCallType = <span class="keyword">true</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="根据网络类型选择对应H263或H264下发ims进行传输展示。"><a href="#根据网络类型选择对应H263或H264下发ims进行传输展示。" class="headerlink" title="根据网络类型选择对应H263或H264下发ims进行传输展示。"></a>根据网络类型选择对应H263或H264下发ims进行传输展示。</h4><blockquote>
+<p>普通Video Call的时候，本机或者peer device有一个处在3G网络，则选择h263文件传输。只有双方都处于4G网络时才选择h264.<br>在conference call的时候并且是SKT运营商时，由本机网络决定h263还是h264, 3G-&gt;h263, 4G-&gt;h264.</p>
+</blockquote>
+<h4 id="交叉编译的ffmpeg文件"><a href="#交叉编译的ffmpeg文件" class="headerlink" title="交叉编译的ffmpeg文件"></a>交叉编译的ffmpeg文件</h4><p><a href="/attach/ffmpeg">ffmpeg</a></p>
+
+    </div>
+
+    
+    
+    
+        
+      
+
+      <footer class="post-footer">
+          
+            
+          
+          <div class="post-tags">
+            
+              <a href="/tags/Android/" rel="tag"># Android</a>
+            
+              <a href="/tags/Video-call/" rel="tag"># Video call</a>
+            
+              <a href="/tags/Hide-me/" rel="tag"># Hide me</a>
+            
+          </div>
+        
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-next post-nav-item">
+              
+                <a href="/2017/03/12/2017-03-12-Call流程图/" rel="next" title="Call流程图">
+                  <i class="fa fa-chevron-left"></i> Call流程图
+                </a>
+              
+            </div>
+
+            <span class="post-nav-divider"></span>
+
+            <div class="post-nav-prev post-nav-item">
+              
+                <a href="/2017/03/14/2017-03-14-关网情况下发送彩信/" rel="prev" title="Android M移动网络关闭下彩信发送流程">
+                  Android M移动网络关闭下彩信发送流程 <i class="fa fa-chevron-right"></i>
+                </a>
+              
+            </div>
+          </div>
+        
+      </footer>
+    
+  </div>
+  
+  
+  
+  </article>
+
+  </div>
+
+
+          </div>
+          
+
+        </div>
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+        
+        
+        
+        
+      
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Hide-Me是什么"><span class="nav-number">1.</span> <span class="nav-text">Hide Me是什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hide-Me实现细节"><span class="nav-number">2.</span> <span class="nav-text">Hide Me实现细节</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#关闭camera-停止采集视频流。"><span class="nav-number">2.1.</span> <span class="nav-text">关闭camera, 停止采集视频流。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Check-hide-me-image-是否存在。"><span class="nav-number">2.2.</span> <span class="nav-text">Check hide me image 是否存在。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#确定本机和Peer-device的网络类型-3G-4G"><span class="nav-number">2.3.</span> <span class="nav-text">确定本机和Peer device的网络类型(3G/4G)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#根据网络类型选择对应H263或H264下发ims进行传输展示。"><span class="nav-number">2.4.</span> <span class="nav-text">根据网络类型选择对应H263或H264下发ims进行传输展示。</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#交叉编译的ffmpeg文件"><span class="nav-number">2.5.</span> <span class="nav-text">交叉编译的ffmpeg文件</span></a></li></ol></li></ol></div>
+        
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Kevin Liu</p>
+  <div class="site-description" itemprop="description">简单生活</div>
+</div>
+  <nav class="site-state motion-element">
+      <div class="site-state-item site-state-posts">
+        
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+    
+      
+      
+      <div class="site-state-item site-state-tags">
+        
+          
+            <a href="/tags/">
+          
+        
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span>
+        </a>
+      </div>
+    
+  </nav>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Kevin Liu</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.4.0</div>
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+  </div>
+
+  
+
+
+  <script src="/lib/anime.min.js?v=3.1.0"></script>
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+<script src="/js/utils.js?v=7.4.0"></script><script src="/js/motion.js?v=7.4.0"></script>
+<script src="/js/schemes/pisces.js?v=7.4.0"></script>
+<script src="/js/next-boot.js?v=7.4.0"></script>
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+</body>
+</html>
